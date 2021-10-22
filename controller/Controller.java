@@ -93,10 +93,12 @@ public class Controller extends Node {
 		}
 	}
 
+	// Returns 3 random Chunk Servers to the Client
 	public synchronized void getServer3(Client c) {
 
 		ArrayList<ChunkServer> randomList = new ArrayList<>();
 
+		// Find 3 random Chunk Servers
 		while (randomList.size() < 3) {
 			int index = Util.getRandInt(0, chunkList.size());
 			if (!randomList.contains(chunkList.get(index))) {
@@ -105,9 +107,9 @@ public class Controller extends Node {
 		}
 
 		try {
+			// Send the List back to the Client
 			TCPSender sender = new TCPSender(c);
 			sender.sendData(Protocol.SERVER3_ACK, randomList);
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -163,6 +165,7 @@ public class Controller extends Node {
 		}
 	}
 
+	// Request for Major Heartbeat from all Chunk Servers
 	public void requestMajorHB() {
 		for (ChunkServer cs : chunkList) {
 			cs.sendMajorHB();

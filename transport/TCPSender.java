@@ -101,5 +101,4 @@ public class TCPSender implements Serializable {
 		oos.flush();
 		socket.close();
 	}
-
 }

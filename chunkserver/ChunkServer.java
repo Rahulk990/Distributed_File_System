@@ -35,9 +35,8 @@ public class ChunkServer extends Node {
 		System.out.println(flag);
 	}
 
-	// Initializes the Free Space to given Configuration value
+	// Updates the available Free space in the Chunk Server
 	public void updateDiskSpace() {
-		// TODO
 		freeSpace = new File(Config.FILE_DIR).getFreeSpace() / 1000000;
 	}
 
@@ -90,7 +89,9 @@ public class ChunkServer extends Node {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		return prime + ((host == null) ? 0 : host.hashCode());
+		int result = 1;
+		result = prime * result + ((host == null) ? 0 : host.hashCode());
+		return result;
 	}
 
 	@Override
@@ -111,6 +112,7 @@ public class ChunkServer extends Node {
 		return true;
 	}
 
+	// Stores the File Chunk on Disk
 	public void store(FileChunk fc, ArrayList<ChunkServer> chunkServerList, Client client) {
 		fileChunkList.add(fc);
 		fc.writeChunk();
@@ -119,21 +121,27 @@ public class ChunkServer extends Node {
 
 		System.out.println("FileChunk: " + fc.getChunkName() + " has been stored on " + this.getNickname());
 
-		chunkServerList.remove(0);
-
 		try {
+			chunkServerList.remove(0);
+
+			// Forwards to the next Chunk Server, if required
 			if (chunkServerList.size() != 0) {
 				TCPSender sender = new TCPSender(chunkServerList.get(0));
 				sender.sendData(Protocol.STORE, fc, chunkServerList, client);
-			} else {
+			}
+
+			// else, Sends the Acknowledgement to the Client
+			else {
 				TCPSender sender = new TCPSender(client);
 				sender.sendData(Protocol.STORE_ACK, this);
 			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	// Retrieve the File Chunk and send to Client
 	public void retrieve(FileChunk fc, Client client) {
 		for (FileChunk fchunk : fileChunkList) {
 			if (fchunk.equals(fc)) {
@@ -192,11 +200,13 @@ public class ChunkServer extends Node {
 		}
 	}
 
+	// Awakes the Chunk Server on Acknowledgement from other Chunk Server
 	public synchronized void notifyFix(FileChunk fc) {
 		this.fchunk = fc;
 		notify();
 	}
 
+	// Stores the given Chunk on Disk
 	public void store(FileChunk fc) {
 		fileChunkList.add(fc);
 		fc.writeChunk();
@@ -206,19 +216,18 @@ public class ChunkServer extends Node {
 		System.out.println("FileChunk: " + fc.getChunkName() + " has been stored on " + this.getNickname());
 	}
 
+	// Remove all File Chunks related to given File
 	public void delete(FileChunk fc) {
-
 		Iterator<FileChunk> iter = fileChunkList.iterator();
-
 		while (iter.hasNext()) {
 			FileChunk fchunk = iter.next();
 			if (fchunk.getFileName().equals(fc.getFileName())) {
 				iter.remove();
+
 				File file = new File(Config.FILE_DIR + "/" + fchunk.getChunkName());
 				file.delete();
 			}
 		}
 		updateDiskSpace();
 	}
-
 }

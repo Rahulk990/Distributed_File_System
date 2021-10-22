@@ -6,23 +6,26 @@ import java.net.UnknownHostException;
 
 import transport.TCPServerThread;
 
+// Wrapper Function for creating ChunkServer and Starting its Components 
 public class StartChunkServer {
-	public static void main(String[] args){
+	public static void main(String[] args) {
 
-		if(args.length != 1){
+		if (args.length != 1) {
 			System.err.println("Usage: ChunkServer [PORT]");
 			System.exit(-1);
 		}
 
 		try {
+			// Creating Chunk Server instance
 			String host = InetAddress.getLocalHost().getHostName();
 			int port = Integer.parseInt(args[0]);
 			ChunkServer chunkServer = new ChunkServer(host, port);
 
+			// Starting the Request Handler
 			TCPServerThread serverThread = new TCPServerThread(chunkServer);
 			serverThread.start();
 
-			// start heartbeat
+			// Starting the Heartbeat thread
 			ChunkServerHeartBeat hb = new ChunkServerHeartBeat(chunkServer);
 			hb.start();
 
@@ -31,6 +34,5 @@ public class StartChunkServer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 }

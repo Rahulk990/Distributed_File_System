@@ -65,16 +65,19 @@ public class TCPReceiverThread extends Thread {
 				System.out.println("Received HB from Controller");
 				break;
 
+			// [Controller] Accepts Chunk Server request from Client
 			case (Protocol.SERVER3):
 				Client client = (Client) ois.readObject();
 				((Controller) node).getServer3(client);
 				break;
 
+			// [Client] Requested Chunk Server List from Controller
 			case (Protocol.SERVER3_ACK):
 				ArrayList<ChunkServer> chunkServerList = (ArrayList<ChunkServer>) ois.readObject();
 				((Client) node).notifyServer3(chunkServerList);
 				break;
 
+			// [Chunk Server] Store the given File Chunk
 			case (Protocol.STORE):
 				fc = (FileChunk) ois.readObject();
 				chunkServerList = (ArrayList<ChunkServer>) ois.readObject();
@@ -82,27 +85,32 @@ public class TCPReceiverThread extends Thread {
 				((ChunkServer) node).store(fc, chunkServerList, client);
 				break;
 
+			// [Client] Acknowledgement of Successful Storing of File Chunk
 			case (Protocol.STORE_ACK):
 				((Client) node).notifyStore();
 				break;
 
+			// [Controller] Request for Chunk Server that stores given File Chunk
 			case (Protocol.CTRL_RETRIEVE):
 				fc = (FileChunk) ois.readObject();
 				client = (Client) ois.readObject();
 				((Controller) node).getChunkServer(fc, client);
 				break;
 
+			// [Client] Requested Chunk Server from Controller
 			case (Protocol.CTRL_RETRIEVE_ACK):
 				chunkServer = (ChunkServer) ois.readObject();
 				((Client) node).notifyRetrieveCTRL(chunkServer);
 				break;
 
+			// [Chunk Server] Retrieve given File Chunk
 			case (Protocol.RETRIEVE):
 				fc = (FileChunk) ois.readObject();
 				client = (Client) ois.readObject();
 				((ChunkServer) node).retrieve(fc, client);
 				break;
 
+			// [Client] Requested File Chunk from Chunk Server
 			case (Protocol.RETRIEVE_ACK):
 				fc = (FileChunk) ois.readObject();
 				((Client) node).notifyRetrieve(fc);
@@ -129,17 +137,20 @@ public class TCPReceiverThread extends Thread {
 				((ChunkServer) node).store(fc);
 				break;
 
+			// [Controller] Request to Delete Given File from File System
 			case (Protocol.REQ_DEL):
 				fc = (FileChunk) ois.readObject();
 				client = (Client) ois.readObject();
 				((Controller) node).getDelServer(fc, client);
 				break;
 
+			// [Client] Request Chunk Server List from Controller
 			case (Protocol.REQ_DEL_ACK):
 				chunkServerList = (ArrayList<ChunkServer>) ois.readObject();
 				((Client) node).notifyDelServer(chunkServerList);
 				break;
 
+			// [Chunk Server] Request to Delete given File Chunk
 			case (Protocol.DEL):
 				fc = (FileChunk) ois.readObject();
 				((ChunkServer) node).delete(fc);
@@ -148,6 +159,7 @@ public class TCPReceiverThread extends Thread {
 			default:
 				System.err.println("Unknown Packet Type" + packetType);
 			}
+
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
