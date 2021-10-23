@@ -46,7 +46,6 @@ public class TCPReceiverThread extends Thread {
 				break;
 
 			// [Controller] Handles Major Heartbeat from ChunkServer
-			// TODO
 			case (Protocol.MAJOR_HB):
 				chunkServer = (ChunkServer) ois.readObject();
 				FileChunk fc = (FileChunk) ois.readObject();
@@ -116,22 +115,26 @@ public class TCPReceiverThread extends Thread {
 				((Client) node).notifyRetrieve(fc);
 				break;
 
+			// [Chunk Server] Fix Initiation from Controller about Corrupted FileChunk
 			case (Protocol.CTRL_FIX):
 				chunkServerList = (ArrayList<ChunkServer>) ois.readObject();
 				((ChunkServer) node).fix(chunkServerList);
 				break;
 
+			// [Chunk Server] Request for correct File Chunk from another Chunk Server
 			case (Protocol.FIX):
 				fc = (FileChunk) ois.readObject();
 				chunkServer = (ChunkServer) ois.readObject();
 				((ChunkServer) node).getFileChunk(fc, chunkServer);
 				break;
 
+			// [Chunk Server] Requested File Chunk from another Chunk Server
 			case (Protocol.FIX_ACK):
 				fc = (FileChunk) ois.readObject();
 				((ChunkServer) node).notifyFix(fc);
 				break;
 
+			// [Chunk Server] Redistribution Request from Controller
 			case (Protocol.REDIS):
 				fc = (FileChunk) ois.readObject();
 				((ChunkServer) node).store(fc);

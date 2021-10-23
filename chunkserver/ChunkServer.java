@@ -18,7 +18,7 @@ public class ChunkServer extends Node {
 
 	private String host;
 	private long freeSpace;
-	private FileChunk fchunk;
+	private FileChunk fChunk;
 	private ArrayList<FileChunk> fileChunkList;
 
 	// Constructor to initialize Chunk Server
@@ -43,21 +43,21 @@ public class ChunkServer extends Node {
 	// Sends Major Heartbeat to the Controller
 	public void sendMajorHB() {
 		boolean corruptFlag = false;
-		fchunk = null;
+		fChunk = null;
 		try {
 
 			// Checks for Corrupted File Chunk
-			// TODO
 			for (FileChunk fc : fileChunkList) {
 				if (!fc.getChecksum().equals(util.Util.SHA1(Config.FILE_DIR + "/" + fc.getChunkName()))) {
 					corruptFlag = true;
-					fchunk = fc;
+					fChunk = fc;
 					break;
 				}
 			}
 
+			// Send Heartbeat to Controller
 			TCPSender sender = new TCPSender(Config.CTRL_HOST, Config.CTRL_PORT);
-			sender.sendData(Protocol.MAJOR_HB, this, fchunk, corruptFlag);
+			sender.sendData(Protocol.MAJOR_HB, this, fChunk, corruptFlag);
 
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -143,11 +143,11 @@ public class ChunkServer extends Node {
 
 	// Retrieve the File Chunk and send to Client
 	public void retrieve(FileChunk fc, Client client) {
-		for (FileChunk fchunk : fileChunkList) {
-			if (fchunk.equals(fc)) {
+		for (FileChunk fChunk : fileChunkList) {
+			if (fChunk.equals(fc)) {
 				try {
 					TCPSender sender = new TCPSender(client);
-					sender.sendData(Protocol.RETRIEVE_ACK, fchunk);
+					sender.sendData(Protocol.RETRIEVE_ACK, fChunk);
 					break;
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -156,41 +156,50 @@ public class ChunkServer extends Node {
 		}
 	}
 
+	// Fix the corrupted File Chunk from another Replica
 	public synchronized void fix(ArrayList<ChunkServer> chunkServerList) {
 		System.out.println("Valid replications:");
 		for (ChunkServer cs : chunkServerList) {
 			System.out.println("\t" + cs.getNickname());
 		}
+
 		try {
+			// Ask for correct File Chunk
 			TCPSender sender = new TCPSender(chunkServerList.get(0));
-			sender.sendData(Protocol.FIX, fchunk, this);
+			sender.sendData(Protocol.FIX, fChunk, this);
 			wait();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 
+		// Fix the corrupted File Chunk
 		for (FileChunk fc : fileChunkList) {
-			if (fc.getChunkName().equals(fchunk.getChunkName())) {
-				fileChunkList.set(fileChunkList.indexOf(fc), fchunk);
-				fchunk.setVersion(fchunk.getVersion() + 1);
-				fchunk.setTimestamp(new Timestamp(System.currentTimeMillis()));
-				fchunk.writeChunk();
-				fchunk.writeMeta();
+			if (fc.getChunkName().equals(fChunk.getChunkName())) {
+				fileChunkList.set(fileChunkList.indexOf(fc), fChunk);
+				fChunk.setVersion(fChunk.getVersion() + 1);
+				fChunk.setTimestamp(new Timestamp(System.currentTimeMillis()));
+				fChunk.writeChunk();
+				fChunk.writeMeta();
 				updateDiskSpace();
-				System.out.println("Chunk fixed: " + fchunk.getChunkName());
+
+				System.out.println("Chunk fixed: " + fChunk.getChunkName());
 				break;
 			}
 		}
 	}
 
+	// Return the asked File Chunk to given Chunk Server
 	public void getFileChunk(FileChunk fc, ChunkServer cs) {
-		for (FileChunk fchunk : fileChunkList) {
-			if (fchunk.getChunkName().equals(fc.getChunkName())) {
+		for (FileChunk fChunk : fileChunkList) {
+			if (fChunk.getChunkName().equals(fc.getChunkName())) {
 				try {
+					// Sending to Chunk Server
 					TCPSender sender = new TCPSender(cs);
-					sender.sendData(Protocol.FIX_ACK, fchunk);
+					sender.sendData(Protocol.FIX_ACK, fChunk);
+
 					System.out.println("Sending valid chunk to " + cs.getNickname());
 					break;
 				} catch (IOException e) {
@@ -202,7 +211,7 @@ public class ChunkServer extends Node {
 
 	// Awakes the Chunk Server on Acknowledgement from other Chunk Server
 	public synchronized void notifyFix(FileChunk fc) {
-		this.fchunk = fc;
+		this.fChunk = fc;
 		notify();
 	}
 
@@ -220,11 +229,11 @@ public class ChunkServer extends Node {
 	public void delete(FileChunk fc) {
 		Iterator<FileChunk> iter = fileChunkList.iterator();
 		while (iter.hasNext()) {
-			FileChunk fchunk = iter.next();
-			if (fchunk.getFileName().equals(fc.getFileName())) {
+			FileChunk fChunk = iter.next();
+			if (fChunk.getFileName().equals(fc.getFileName())) {
 				iter.remove();
 
-				File file = new File(Config.FILE_DIR + "/" + fchunk.getChunkName());
+				File file = new File(Config.FILE_DIR + "/" + fChunk.getChunkName());
 				file.delete();
 			}
 		}

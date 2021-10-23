@@ -1,12 +1,9 @@
 package transport;
 
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.util.ArrayList;
 
 import chunkserver.ChunkServer;

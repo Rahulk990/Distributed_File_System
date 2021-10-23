@@ -13,10 +13,12 @@ import transport.TCPSender;
 import util.Node;
 import util.Util;
 
+// Implements the Controller
 public class Controller extends Node {
 
 	private ArrayList<ChunkServer> chunkList;
 
+	// Constructor to initialize the Controller
 	public Controller(String host, int port) {
 		super(host, port);
 		chunkList = new ArrayList<>();
@@ -42,19 +44,24 @@ public class Controller extends Node {
 		return ret;
 	}
 
+	// Process Major HeartBeat Message and Initiate Fixes of any Corrupted FileChunk
 	public synchronized void processMajorHB(ChunkServer chunkServer, FileChunk fc, boolean flag) {
 		ArrayList<ChunkServer> fixServers = new ArrayList<>();
+
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 		System.out.println("\n" + timestamp);
+
+		// Get all Chunk Servers that contain Corrupted FileChunk
 		System.out.println("Available chunk servers:");
 		for (ChunkServer cs : chunkList) {
 			if (cs.equals(chunkServer)) {
 				chunkList.set(chunkList.indexOf(cs), chunkServer);
 			}
+
 			System.out.println("\t" + cs.getNickname() + ": " + cs.getFreeSpace() + " MB");
+
 			ArrayList<FileChunk> chunks = cs.getFileChunkList();
 			for (FileChunk chunk : chunks) {
-				// get all chunk servers that contain corrupted chunk
 				if (flag == true) {
 					if (chunk.getChunkName().equals(fc.getChunkName()) && !cs.equals(chunkServer)) {
 						fixServers.add(cs);
@@ -67,10 +74,12 @@ public class Controller extends Node {
 
 		if (flag == true) {
 			System.err.println("\nData corruption on " + chunkServer.getNickname() + ": " + fc.getChunkName());
+
 			try {
-				// send fixServer back to corrupted chunkServer
+				// Send list of Servers that contain Correct Chunk back to corrupted chunkServer
 				TCPSender sender = new TCPSender(chunkServer);
 				sender.sendData(Protocol.CTRL_FIX, fixServers);
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -115,13 +124,16 @@ public class Controller extends Node {
 		}
 	}
 
+	// Returns the Chunk Server that contains the requested FileChunk
 	public synchronized void getChunkServer(FileChunk fc, Client c) {
 		for (ChunkServer cs : chunkList) {
 			if (cs.getFileChunkList().contains(fc)) {
 				try {
+					// Sending back to Client
 					TCPSender sender = new TCPSender(c);
 					sender.sendData(Protocol.CTRL_RETRIEVE_ACK, cs);
 					break;
+
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -129,25 +141,29 @@ public class Controller extends Node {
 		}
 	}
 
+	// Send Heartbeat and Handle Terminated Servers
 	public synchronized void sendHB() {
 		ArrayList<ChunkServer> downServer = new ArrayList<>();
 		try {
+
+			// Sending Heartbeat to all Chunk Servers
 			for (ChunkServer cs : chunkList) {
 				try {
 					TCPSender sender = new TCPSender(cs);
 					sender.sendData(Protocol.CTRL_HB);
-
 				} catch (ConnectException e) {
 					downServer.add(cs);
 				}
 			}
 
-			// dealing with terminated servers
+			// Handling Terminated Servers
 			System.out.println();
 			for (ChunkServer downCS : downServer) {
 				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-				System.out.println(timestamp + " " + downCS.getNickname() + " is down \nRedistributing files...");
+				System.out.println(timestamp + " " + downCS.getNickname() + " is down");
+				System.out.println("Redistributing files...");
 
+				// Redistribute the File Chunks to First available Chunk Server
 				ArrayList<FileChunk> fileChunkList = downCS.getFileChunkList();
 				for (FileChunk fc : fileChunkList) {
 					for (ChunkServer cs : chunkList) {
@@ -158,8 +174,11 @@ public class Controller extends Node {
 						}
 					}
 				}
+
+				// Removing the Chunk Server from List of active Chunk Servers
 				chunkList.remove(chunkList.indexOf(downCS));
 			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -172,8 +191,10 @@ public class Controller extends Node {
 		}
 	}
 
+	// Return all Chunk Servers that store the Chunks of given File
 	public void getDelServer(FileChunk fc, Client c) {
 		ArrayList<ChunkServer> delServer = new ArrayList<>();
+
 		for (ChunkServer cs : chunkList) {
 			for (FileChunk fchunk : cs.getFileChunkList()) {
 				if (fchunk.getFileName().equals(fc.getFileName())) {
@@ -182,13 +203,15 @@ public class Controller extends Node {
 				}
 			}
 		}
+
 		try {
+			// Sending the list to the Client
 			TCPSender sender = new TCPSender(c);
 			sender.sendData(Protocol.REQ_DEL_ACK, delServer);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
-
 }
