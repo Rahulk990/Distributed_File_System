@@ -76,7 +76,7 @@ public class Controller extends Node {
 			System.err.println("\nData corruption on " + chunkServer.getNickname() + ": " + fc.getChunkName());
 
 			try {
-				// Send list of Servers that contain Correct Chunk back to corrupted chunkServer
+				// Send list of Servers that contain Correct Chunk back to corrupted chunkServer(doubt)
 				TCPSender sender = new TCPSender(chunkServer);
 				sender.sendData(Protocol.CTRL_FIX, fixServers);
 
@@ -93,7 +93,7 @@ public class Controller extends Node {
 
 				// Overridden equals Function
 				if (cs.equals(chunkServer)) {
-					chunkList.set(chunkList.indexOf(cs), chunkServer);
+					chunkList.set(chunkList.indexOf(cs), chunkServer); //(doubt) why replace when cs==chunkserver?
 					break;
 				}
 			}
