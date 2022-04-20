@@ -10,8 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
-import util.Config;
-
 // Implements the File Chunk
 public class FileChunk implements Serializable {
 
@@ -39,10 +37,14 @@ public class FileChunk implements Serializable {
 	}
 
 	// Stores the File Chunk on Disk (as File)
-	public void writeChunk() {
-		File file = new File(Config.FILE_DIR + "/" + chunkName);
+	public void writeChunk(int port) {
+		File file = new File(port + "_" + chunkName);
 
 		try {
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+
 			FileOutputStream fos = new FileOutputStream(file);
 			fos.write(content);
 			fos.flush();
@@ -58,8 +60,8 @@ public class FileChunk implements Serializable {
 	}
 
 	// Stores the Meta Data about the File Chunk on Disk
-	public void writeMeta() {
-		File file = new File(Config.FILE_DIR + "/" + chunkName + "_meta");
+	public void writeMeta(int port) {
+		File file = new File(port + "_" + chunkName + "_meta");
 
 		try {
 			FileOutputStream fos = new FileOutputStream(file);

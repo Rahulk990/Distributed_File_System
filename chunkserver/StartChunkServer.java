@@ -20,6 +20,7 @@ public class StartChunkServer {
 			String host = InetAddress.getLocalHost().getHostName();
 			int port = Integer.parseInt(args[0]);
 			ChunkServer chunkServer = new ChunkServer(host, port);
+			System.out.println("Chunk Server started on " + chunkServer.getNickname());
 
 			// Starting the Request Handler
 			TCPServerThread serverThread = new TCPServerThread(chunkServer);

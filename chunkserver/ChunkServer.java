@@ -16,8 +16,9 @@ import util.Node;
 // Implements the Chunk Server
 public class ChunkServer extends Node {
 
+	private int port;
 	private String host;
-	private long freeSpace;
+	private long usedSpace;
 	private FileChunk fChunk;
 	private ArrayList<FileChunk> fileChunkList;
 
@@ -26,7 +27,8 @@ public class ChunkServer extends Node {
 		super(host, port);
 
 		this.host = host;
-		updateDiskSpace();
+		this.port = port;
+		this.usedSpace = 0;
 		fileChunkList = new ArrayList<>();
 	}
 
@@ -36,8 +38,8 @@ public class ChunkServer extends Node {
 	}
 
 	// Updates the available Free space in the Chunk Server
-	public void updateDiskSpace() {
-		freeSpace = new File(Config.FILE_DIR).getFreeSpace() / 1000000;
+	public void updateDiskSpace(int size) {
+		usedSpace += size;
 	}
 
 	// Sends Major Heartbeat to the Controller
@@ -48,7 +50,7 @@ public class ChunkServer extends Node {
 
 			// Checks for Corrupted File Chunk
 			for (FileChunk fc : fileChunkList) {
-				if (!fc.getChecksum().equals(util.Util.SHA1(Config.FILE_DIR + "/" + fc.getChunkName()))) {
+				if (!fc.getChecksum().equals(util.Util.SHA1(this.port + "_" + fc.getChunkName()))) {
 					corruptFlag = true;
 					fChunk = fc;
 					break;
@@ -82,8 +84,8 @@ public class ChunkServer extends Node {
 	}
 
 	// Returns the available Free space
-	public long getFreeSpace() {
-		return freeSpace;
+	public long getusedSpace() {
+		return usedSpace;
 	}
 
 	@Override
@@ -107,7 +109,7 @@ public class ChunkServer extends Node {
 		if (host == null) {
 			if (other.host != null)
 				return false;
-		} else if (!host.equals(other.host))
+		} else if (port != other.port)
 			return false;
 		return true;
 	}
@@ -115,9 +117,9 @@ public class ChunkServer extends Node {
 	// Stores the File Chunk on Disk
 	public void store(FileChunk fc, ArrayList<ChunkServer> chunkServerList, Client client) {
 		fileChunkList.add(fc);
-		fc.writeChunk();
-		fc.writeMeta();
-		updateDiskSpace();
+		fc.writeChunk(this.port);
+		fc.writeMeta(this.port);
+		updateDiskSpace(fc.getContent().length);
 
 		System.out.println("FileChunk: " + fc.getChunkName() + " has been stored on " + this.getNickname());
 
@@ -181,9 +183,9 @@ public class ChunkServer extends Node {
 				fileChunkList.set(fileChunkList.indexOf(fc), fChunk);
 				fChunk.setVersion(fChunk.getVersion() + 1);
 				fChunk.setTimestamp(new Timestamp(System.currentTimeMillis()));
-				fChunk.writeChunk();
-				fChunk.writeMeta();
-				updateDiskSpace();
+				fChunk.writeChunk(this.port);
+				fChunk.writeMeta(this.port);
+				updateDiskSpace(0);
 
 				System.out.println("Chunk fixed: " + fChunk.getChunkName());
 				break;
@@ -218,9 +220,9 @@ public class ChunkServer extends Node {
 	// Stores the given Chunk on Disk
 	public void store(FileChunk fc) {
 		fileChunkList.add(fc);
-		fc.writeChunk();
-		fc.writeMeta();
-		updateDiskSpace();
+		fc.writeChunk(this.port);
+		fc.writeMeta(this.port);
+		updateDiskSpace(fc.getContent().length);
 
 		System.out.println("FileChunk: " + fc.getChunkName() + " has been stored on " + this.getNickname());
 	}
@@ -233,10 +235,13 @@ public class ChunkServer extends Node {
 			if (fChunk.getFileName().equals(fc.getFileName())) {
 				iter.remove();
 
-				File file = new File(Config.FILE_DIR + "/" + fChunk.getChunkName());
+				File file = new File(this.port + "_" + fChunk.getChunkName());
 				file.delete();
+
+				File file_meta = new File(this.port + "_" + fChunk.getChunkName() + "_meta");
+				file_meta.delete();
 			}
 		}
-		updateDiskSpace();
+		updateDiskSpace(-fc.getContent().length);
 	}
 }

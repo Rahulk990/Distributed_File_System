@@ -22,6 +22,7 @@ public class StartClient {
 			String host = InetAddress.getLocalHost().getHostName();
 			int port = Integer.parseInt(args[0]);
 			client = new Client(host, port);
+			System.out.println("Client started on " + client.getNickname());
 
 			// Starting the Request Handler
 			TCPServerThread serverThread = new TCPServerThread(client);
@@ -33,7 +34,7 @@ public class StartClient {
 			e.printStackTrace();
 		}
 
-		System.out.println("Please enter action name: [store] [retrieve] [update] [q! for exit]");
+		System.out.println("Please enter action name: [store] [retrieve] [update] [delete] [q! for exit]");
 
 		Scanner scan = new Scanner(System.in);
 		String actionName = scan.next();
@@ -59,6 +60,12 @@ public class StartClient {
 				client.update(fileName);
 				break;
 
+			case ("delete"):
+				System.out.println("\nPlease enter file name:");
+				fileName = scan.next();
+				client.delete(fileName);
+				break;
+
 			case ("q!"):
 				System.out.println("\nBye!");
 				scan.close();
@@ -68,7 +75,7 @@ public class StartClient {
 				System.err.println("\nUnknown Action");
 			}
 
-			System.out.println("\nPlease enter action name: [store] [retrieve] [update] [q! for exit]");
+			System.out.println("\nPlease enter action name: [store] [retrieve] [update] [delete] [q! for exit]");
 			actionName = scan.next();
 		}
 

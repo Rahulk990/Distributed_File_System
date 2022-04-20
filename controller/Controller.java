@@ -10,6 +10,7 @@ import chunkserver.FileChunk;
 import client.Client;
 import transport.Protocol;
 import transport.TCPSender;
+import util.Config;
 import util.Node;
 import util.Util;
 
@@ -58,7 +59,7 @@ public class Controller extends Node {
 				chunkList.set(chunkList.indexOf(cs), chunkServer);
 			}
 
-			System.out.println("\t" + cs.getNickname() + ": " + cs.getFreeSpace() + " MB");
+			System.out.println("\t" + cs.getNickname() + ": " + cs.getusedSpace() + " Bytes");
 
 			ArrayList<FileChunk> chunks = cs.getFileChunkList();
 			for (FileChunk chunk : chunks) {
@@ -106,9 +107,10 @@ public class Controller extends Node {
 	public synchronized void getServer3(Client c) {
 
 		ArrayList<ChunkServer> randomList = new ArrayList<>();
+		System.out.println(chunkList.size());
 
 		// Find 3 random Chunk Servers
-		while (randomList.size() < 3) {
+		while (randomList.size() < Config.REPLICAS) {
 			int index = Util.getRandInt(0, chunkList.size());
 			if (!randomList.contains(chunkList.get(index))) {
 				randomList.add(chunkList.get(index));

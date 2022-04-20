@@ -94,8 +94,8 @@ public class Client extends Node {
 
 			// Merge all the File Chunks and store on Disk
 			chunks.sort(Comparator.comparing(FileChunk::getFrag));
-			mergeFile(chunks, Config.FILE_DIR + "/" + fileName);
-			System.out.println(fileName + " has been stored in /tmp");
+			mergeFile(chunks, "Retrieved_" + fileName);
+			System.out.println(fileName + " has been retrieved");
 
 		} catch (IOException e) {
 			e.printStackTrace();
